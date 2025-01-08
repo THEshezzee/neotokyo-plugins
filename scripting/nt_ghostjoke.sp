@@ -83,7 +83,7 @@ public Action Timer_CheckGhost(Handle timer, any client)
 
 void HandleFireEffect(int client, bool hasGhost)
 {
-    if (g_hGhostFireEnabled.IntValue == 1 && hasGhost && !g_bIsBurning[client])
+    if (g_hGhostFireEnabled.IntValue == 1 && hasGhost)
     {
         IgniteEntity(client, 3.0);
         g_bIsBurning[client] = true;
