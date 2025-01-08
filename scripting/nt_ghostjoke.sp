@@ -111,9 +111,9 @@ void HandleExplosionChance(int client)
     }
     
     // Debug message
-    char debugMessage[256];
-    Format(debugMessage, sizeof(debugMessage), "Explosion chance: %d, Random value: %d", explodeChance, randomValue);
-    PrintToChat(client, debugMessage);
+    // char debugMessage[256];
+    // Format(debugMessage, sizeof(debugMessage), "Explosion chance: %d, Random value: %d", explodeChance, randomValue);
+    // PrintToChat(client, debugMessage);
 }
 
 void CreateTimeBomb(int client)
