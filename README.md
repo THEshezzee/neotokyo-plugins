@@ -1,6 +1,6 @@
 # neotokyo-plugins
 ## nt_ghostjoke
-`sm_ghostburn` **<0-1>** - enable or disable player burn by picking up the ghost  
+`sm_ghostfire` **<0-1>** - enable or disable player burn by picking up the ghost  
 `sm_ghostexplode` **<0-100>** - chance what player will be exploded by picking up the ghost in percent
 ## nt_points
 `nt_xp` **<0-1>** - enable or disable full weapon unlock  
