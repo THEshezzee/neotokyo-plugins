@@ -28,3 +28,6 @@ sm_neotokyo_balance_enabled **<0-1>** - Enable or disable team autobalancing
 
 ## nt_balance
 nt_adminkey **<key>** - set auth password for players to become admins.
+
+## nt_teamkill
+This plugin bans a player for 5 minutes if they kill all their teammates within 5 seconds using non-grenade weapons.
