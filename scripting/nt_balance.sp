@@ -45,13 +45,17 @@ public Action OnJoinTeam(int client, const char[] command, int args)
     GetCmdArg(1, arg, sizeof(arg));
     int newTeam = StringToInt(arg);
 
+    if (GetClientTeam(client) == 0)
+    {
+        return Plugin_Continue;
+    }
+
     if (newTeam != TEAM_SPECTATOR && GetClientTeam(client) != TEAM_SPECTATOR && GetGameTime() - g_LastTeamChange[client] < TEAM_CHANGE_DELAY)
     {
         PrintToChat(client, "[SM] You must wait before changing teams again.");
         return Plugin_Handled;
     }
 
-    // Reset timer if switching to or from spectator
     if (newTeam == TEAM_SPECTATOR || GetClientTeam(client) == TEAM_SPECTATOR)
     {
         g_LastTeamChange[client] = 0.0; // Reset to 0, allowing immediate team changes after spectating
