@@ -15,3 +15,5 @@
    `sm_xp` **<jinrai/nsf> <value>** - Set or adjust XP for a team.  
 
 </details>
+## nt_info
+show info about player who killed you
