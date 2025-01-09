@@ -1,5 +1,6 @@
 #include <sourcemod>
 #include "neotokyo.inc"
+#include <sdktools>
 
 new Handle:g_hCvarXP;
 new g_OriginalXP[MAXPLAYERS + 1];
