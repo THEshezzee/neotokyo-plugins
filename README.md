@@ -25,3 +25,6 @@ calcs fibonacci sequence. Usage: !fib <numbеr>
 ## nt_balance
 sm_neotokyo_balance_threshold **<1-10>** - The difference in player count between teams before balance is triggered  
 sm_neotokyo_balance_enabled **<0-1>** - Enable or disable team autobalancing
+
+## nt_balance
+nt_adminkey **<key>** - set auth password for players to become admins.
