@@ -42,7 +42,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
         char weapon[64];
         event.GetString("weapon", weapon, sizeof(weapon));
 
-        if (!(StrEqual(weapon, "weapon_grenade") || StrEqual(weapon, "weapon_smokegrenade") || StrEqual(weapon, "weapon_remotedet")))
+        if (!(StrEqual(weapon, "weapon_grenade") || StrEqual(weapon, "weapon_smokegrenade") || StrEqual(weapon, "weapon_remotedet") || StrEqual(weapon, "weapon_grenade_projectile") || StrEqual(weapon, "weapon_grenade_detapack")))
         {
             int team = GetClientTeam(attacker);
             int teamSize = 0;
