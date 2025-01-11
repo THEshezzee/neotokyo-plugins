@@ -17,6 +17,7 @@ public Plugin myinfo =
 int g_LastKiller[MAXPLAYERS + 1];
 int g_LastKillerHealth[MAXPLAYERS + 1];
 char g_LastWeaponUsed[MAXPLAYERS + 1][64];
+float g_LastDistance[MAXPLAYERS + 1];
 
 public void OnPluginStart()
 {
@@ -35,11 +36,17 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
         {
             g_LastKillerHealth[victim] = GetEntProp(attacker, Prop_Data, "m_iHealth");
             LogMessage("Attacker %d health: %d", attacker, g_LastKillerHealth[victim]);
+            
+            float victimPos[3], attackerPos[3];
+            GetClientAbsOrigin(victim, victimPos);
+            GetClientAbsOrigin(attacker, attackerPos);
+            g_LastDistance[victim] = GetVectorDistance(victimPos, attackerPos);
         }
         else
         {
             g_LastKillerHealth[victim] = 0;
             LogMessage("Attacker %d not in game, setting health to 0", attacker);
+            g_LastDistance[victim] = 0.0; // or any default value
         }
         event.GetString("weapon", g_LastWeaponUsed[victim], sizeof(g_LastWeaponUsed[]));
         CreateTimer(0.1, Timer_ShowKillerInfo, victim);
@@ -72,8 +79,8 @@ void ShowKillerMenu(int client)
 
     LogMessage("Displaying menu for client %d with killer %d", client, killer);
 
-    Format(info, sizeof(info), "Playername: %s", name);
-    menu.AddItem("", info, ITEMDRAW_DISABLED);
+    Format(info, sizeof(info), "%s killed you", name);
+    menu.SetTitle(info);
 
     Format(info, sizeof(info), "HP: %d", g_LastKillerHealth[client]);
     menu.AddItem("", info, ITEMDRAW_DISABLED);
@@ -84,6 +91,9 @@ void ShowKillerMenu(int client)
     menu.AddItem("", info, ITEMDRAW_DISABLED);
 
     Format(info, sizeof(info), "Weapon: %s", g_LastWeaponUsed[client]);
+    menu.AddItem("", info, ITEMDRAW_DISABLED);
+
+    Format(info, sizeof(info), "Distance: %f m", g_LastDistance[client]); // %.2f
     menu.AddItem("", info, ITEMDRAW_DISABLED);
 
     menu.Display(client, MENU_TIMEOUT);
