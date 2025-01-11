@@ -40,7 +40,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
             float victimPos[3], attackerPos[3];
             GetClientAbsOrigin(victim, victimPos);
             GetClientAbsOrigin(attacker, attackerPos);
-            g_LastDistance[victim] = GetVectorDistance(victimPos, attackerPos) / 48.5; // magic value
+            g_LastDistance[victim] = GetVectorDistance(victimPos, attackerPos) * 0.0254; // magic value
         }
         else
         {
@@ -103,7 +103,7 @@ public int PanelHandler_KillerInfo(Menu panel, MenuAction action, int param1, in
 {
     if (action == MenuAction_End)
     {
-        
+
     }
     return 0;
 }
