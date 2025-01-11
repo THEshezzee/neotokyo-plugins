@@ -8,7 +8,7 @@
 public Plugin myinfo =
 {
     name = "Killer Info Display",
-    description = "Shows specific info about the player who killed you in a menu",
+    description = "Shows specific info about the player who killed you in a panel",
     version = "1.0"
 };
 
@@ -40,13 +40,13 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
             float victimPos[3], attackerPos[3];
             GetClientAbsOrigin(victim, victimPos);
             GetClientAbsOrigin(attacker, attackerPos);
-            g_LastDistance[victim] = GetVectorDistance(victimPos, attackerPos);
+            g_LastDistance[victim] = GetVectorDistance(victimPos, attackerPos) / 48.5; // magic value
         }
         else
         {
             g_LastKillerHealth[victim] = 0;
             LogMessage("Attacker %d not in game, setting health to 0", attacker);
-            g_LastDistance[victim] = 0.0; // or any default value
+            g_LastDistance[victim] = 0.0;
         }
         event.GetString("weapon", g_LastWeaponUsed[victim], sizeof(g_LastWeaponUsed[]));
         CreateTimer(0.1, Timer_ShowKillerInfo, victim);
@@ -57,12 +57,12 @@ public Action Timer_ShowKillerInfo(Handle timer, any client)
 {
     if (IsClientInGame(client))
     {
-        ShowKillerMenu(client);
+        ShowKillerPanel(client);
     }
     return Plugin_Stop;
 }
 
-void ShowKillerMenu(int client)
+void ShowKillerPanel(int client)
 {
     int killer = g_LastKiller[client];
     if (!IsClientInGame(killer))
@@ -75,36 +75,37 @@ void ShowKillerMenu(int client)
     char name[MAX_NAME_LENGTH];
     GetClientName(killer, name, sizeof(name));
 
-    Menu menu = new Menu(MenuHandler_KillerInfo);
-
-    LogMessage("Displaying menu for client %d with killer %d", client, killer);
+    Panel panel = new Panel();
+    LogMessage("Displaying panel for client %d with killer %d", client, killer);
 
     Format(info, sizeof(info), "%s killed you", name);
-    menu.SetTitle(info);
+    panel.SetTitle(info);
 
     Format(info, sizeof(info), "HP: %d", g_LastKillerHealth[client]);
-    menu.AddItem("", info, ITEMDRAW_DISABLED);
+    panel.DrawText(info);
 
     char classStr[32];
     strcopy(classStr, sizeof(classStr), GetPlayerClassString(GetPlayerClass(killer)));
     Format(info, sizeof(info), "Class: %s", classStr);
-    menu.AddItem("", info, ITEMDRAW_DISABLED);
+    panel.DrawText(info);
 
     Format(info, sizeof(info), "Weapon: %s", g_LastWeaponUsed[client]);
-    menu.AddItem("", info, ITEMDRAW_DISABLED);
+    panel.DrawText(info);
 
-    Format(info, sizeof(info), "Distance: %f m", g_LastDistance[client]); // %.2f
-    menu.AddItem("", info, ITEMDRAW_DISABLED);
+    Format(info, sizeof(info), "Distance: %.2fm", g_LastDistance[client]); // %.2f
+    panel.DrawText(info);
 
-    menu.Display(client, MENU_TIMEOUT);
+    panel.Send(client, PanelHandler_KillerInfo, MENU_TIMEOUT);
+    delete panel;
 }
 
-public int MenuHandler_KillerInfo(Menu menu, MenuAction action, int param1, int param2)
+public int PanelHandler_KillerInfo(Menu panel, MenuAction action, int param1, int param2)
 {
     if (action == MenuAction_End)
     {
-        delete menu;
+        
     }
+    return 0;
 }
 
 char[] GetPlayerClassString(int class)
