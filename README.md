@@ -31,3 +31,8 @@ nt_adminkey **<key>** - set auth password for players to become admins.
 
 ## nt_teamkill
 This plugin bans a player for 5 minutes if they kill all their teammates within 5 seconds using non-grenade weapons.
+## nt_hitmarker
+adds shot info on !hit  
+sm_hitmarker **<0-1>** - enable or disable plugin   
+sv_hitmarkeradminonly **<0-1>** - restrict command to admins only  
+sv_hitmarkersay **<0-1>** - add !hit description broadcast
