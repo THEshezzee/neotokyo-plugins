@@ -107,6 +107,7 @@ public int MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, i
         else if (StrEqual(info, "advanced"))
         {
             ShowAdvancedMenu(param1);
+            return MenuAction_Display;
         }
 
         Command_OpenHitMenu(param1, 0);
@@ -116,6 +117,7 @@ public int MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, i
         delete menu;
     }
 }
+
 
 void ShowAdvancedMenu(int client)
 {
