@@ -81,6 +81,8 @@ void ShowKillerPanel(int client)
     Format(info, sizeof(info), "%s killed you", name);
     panel.SetTitle(info);
 
+    panel.DrawItem("", ITEMDRAW_SPACER|ITEMDRAW_RAWLINE|ITEMDRAW_DISABLED);
+
     Format(info, sizeof(info), "HP: %d", g_LastKillerHealth[client]);
     panel.DrawText(info);
 
