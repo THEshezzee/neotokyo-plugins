@@ -38,3 +38,6 @@ sv_hitmarkeradminonly **<0-1>** - restrict command to admins only
 sv_hitmarkersay **<0-1>** - add !hit description broadcast
 
 ## [nt_mapchooser](https://github.com/bauxiteDYS/SM-NT-MapChooser)
+
+## nt_god
+sm_god **<playername>** **<0-1>** - enable or disable godmode
