@@ -41,3 +41,9 @@ sv_hitmarkersay **<0-1>** - add !hit description broadcast
 
 ## nt_god
 sm_god **<playername>** **<0-1>** - enable or disable godmode
+
+## nt_weaponmenu
+nt_weaponenabled **<0-1>** - Enable or disable the plugin
+nt_weaponadmin **<0-1>** - Restrict the !weapon command to admins only
+nt_weaponbroadcast **<0-1>** - Broadcast the existence of the !weapon command to all players
+sm_allowghost **<0-1>** - Enable or disable the ghost in the weapon menu (default 0)
