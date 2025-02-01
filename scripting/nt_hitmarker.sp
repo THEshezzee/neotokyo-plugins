@@ -9,18 +9,23 @@ public Plugin myinfo =
 {
     name = "NeoTokyo Hitmarker Settings",
     description = "Allows setting hitmarker options with advanced features",
-    version = "1.4",
+    version = "1.5",
     url = "https://github.com/THEshezzee/neotokyo-plugins"
 };
 
 #define HITMARKER_INTERVAL 300.0
 
-bool g_HitMarkerEnabled[MAXPLAYERS + 1] = {false, ...};
-bool g_KillMarkerEnabled[MAXPLAYERS + 1] = {false, ...};
-bool g_DamageDealedEnabled[MAXPLAYERS + 1] = {false, ...};
-bool g_HealthLeftEnabled[MAXPLAYERS + 1] = {false, ...};
+bool g_HitMarkerEnabled[MAXPLAYERS + 1];
+bool g_KillMarkerEnabled[MAXPLAYERS + 1];
+bool g_DamageDealedEnabled[MAXPLAYERS + 1];
+bool g_HealthLeftEnabled[MAXPLAYERS + 1];
 int g_LastHealth[MAXPLAYERS + 1][MAXPLAYERS + 1];
 int g_TotalDamage[MAXPLAYERS + 1][MAXPLAYERS + 1];
+
+ArrayList g_HitMarkerSounds;
+
+char g_SelectedHitSound[MAXPLAYERS + 1][PLATFORM_MAX_PATH];
+char g_SelectedKillSound[MAXPLAYERS + 1][PLATFORM_MAX_PATH];
 
 ConVar g_cvarHitmarkerEnabled;
 ConVar g_cvarHitmarkerAdminOnly;
@@ -40,11 +45,62 @@ public void OnPluginStart()
     HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
     HookEvent("player_spawn", Event_PlayerSpawn);
 
+    g_HitMarkerSounds = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
+
     AutoExecConfig(true, "plugin_hitmarker");
 
     if (g_cvarHitmarkerSay.IntValue == 1 && g_cvarHitmarkerEnabled.IntValue == 1)
     {
         g_hTimerHitmarkerSay = CreateTimer(HITMARKER_INTERVAL, Timer_HitmarkerAnnouncement, _, TIMER_REPEAT);
+    }
+}
+
+public void OnMapStart()
+{
+    if (g_hTimerHitmarkerSay != null)
+    {
+        KillTimer(g_hTimerHitmarkerSay);
+        g_hTimerHitmarkerSay = null;
+    }
+    if (g_cvarHitmarkerSay.IntValue == 1 && g_cvarHitmarkerEnabled.IntValue == 1)
+    {
+        g_hTimerHitmarkerSay = CreateTimer(HITMARKER_INTERVAL, Timer_HitmarkerAnnouncement, _, TIMER_REPEAT);
+    }
+
+    LoadSounds();
+
+    char soundPath[PLATFORM_MAX_PATH];
+    char fullPath[PLATFORM_MAX_PATH];
+    for (int i = 0; i < g_HitMarkerSounds.Length; i++)
+    {
+        g_HitMarkerSounds.GetString(i, soundPath, sizeof(soundPath));
+        PrecacheSound(soundPath, true);
+        Format(fullPath, sizeof(fullPath), "sound/%s", soundPath);
+        AddFileToDownloadsTable(fullPath);
+    }
+}
+
+void LoadSounds()
+{
+    char soundPath[PLATFORM_MAX_PATH];
+    char buffer[PLATFORM_MAX_PATH];
+
+    g_HitMarkerSounds.Clear();
+
+    Format(soundPath, sizeof(soundPath), "sound/hitsounds/*.wav");
+    Handle dir = OpenDirectory("sound/hitsounds");
+    if (dir != null)
+    {
+        while (ReadDirEntry(dir, buffer, sizeof(buffer)))
+        {
+            if (StrContains(buffer, ".wav", false) != -1)
+            {
+                Format(buffer, sizeof(buffer), "hitsounds/%s", buffer);
+
+                g_HitMarkerSounds.PushString(buffer);
+            }
+        }
+        CloseHandle(dir);
     }
 }
 
@@ -83,11 +139,14 @@ public Action Command_OpenHitMenu(int client, int args)
 
     menu.AddItem("advanced", "Advanced options");
 
+    menu.AddItem("hitsounds", "Hitsounds");
+    menu.AddItem("killsounds", "Killsounds");
+
     menu.Display(client, MENU_TIME_FOREVER);
     return Plugin_Handled;
 }
 
-public int MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, int param2)
+public void MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -97,19 +156,71 @@ public int MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, i
         if (StrEqual(info, "killmarker"))
         {
             g_KillMarkerEnabled[param1] = !g_KillMarkerEnabled[param1];
-            PrintToChat(param1, "[hitmarker] killmarker %s", g_KillMarkerEnabled[param1] ? "enabled" : "disabled");
+            PrintToChat(param1, "[hitmarker] Kill Marker %s", g_KillMarkerEnabled[param1] ? "enabled" : "disabled");
+            Command_OpenHitMenu(param1, 0);
         }
         else if (StrEqual(info, "hitmarker"))
         {
             g_HitMarkerEnabled[param1] = !g_HitMarkerEnabled[param1];
-            PrintToChat(param1, "[hitmarker] hitmarker %s", g_HitMarkerEnabled[param1] ? "enabled" : "disabled");
+            PrintToChat(param1, "[hitmarker] Hit Marker %s", g_HitMarkerEnabled[param1] ? "enabled" : "disabled");
+            Command_OpenHitMenu(param1, 0);
+        }
+        else if (StrEqual(info, "hitsounds") || StrEqual(info, "killsounds"))
+        {
+            ShowSoundMenu(param1);
         }
         else if (StrEqual(info, "advanced"))
         {
             ShowAdvancedMenu(param1);
-            return MenuAction_Display;
         }
+    }
+    else if (action == MenuAction_End)
+    {
+        delete menu;
+    }
+}
 
+void ShowSoundMenu(int client)
+{
+    Menu menu = new Menu(MenuHandler_Sound);
+    menu.SetTitle("Select Sound");
+
+    char soundPath[PLATFORM_MAX_PATH];
+    char soundName[PLATFORM_MAX_PATH];
+    char tempPath[PLATFORM_MAX_PATH];
+    for (int i = 0; i < g_HitMarkerSounds.Length; i++)
+    {
+        g_HitMarkerSounds.GetString(i, soundPath, sizeof(soundPath));
+        int lastSlash = FindCharInString(soundPath, '/', true);
+        if (lastSlash != -1)
+        {
+            strcopy(tempPath, sizeof(tempPath), soundPath[lastSlash + 1]);
+        }
+        else
+        {
+            strcopy(tempPath, sizeof(tempPath), soundPath);
+        }
+        strcopy(soundName, sizeof(soundName), tempPath);
+        menu.AddItem(soundPath, soundName);
+    }
+
+    menu.ExitBackButton = true;
+    menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int MenuHandler_Sound(Menu menu, MenuAction action, int param1, int param2)
+{
+    if (action == MenuAction_Select)
+    {
+        char info[PLATFORM_MAX_PATH];
+        menu.GetItem(param2, info, sizeof(info));
+        strcopy(g_SelectedHitSound[param1], sizeof(g_SelectedHitSound[]), info);
+        strcopy(g_SelectedKillSound[param1], sizeof(g_SelectedKillSound[]), info);
+        PrintToChat(param1, "[hitmarker] Sound set to: %s", info);
+        ShowSoundMenu(param1);
+    }
+    else if (action == MenuAction_Cancel && param2 == MenuCancel_ExitBack)
+    {
         Command_OpenHitMenu(param1, 0);
     }
     else if (action == MenuAction_End)
@@ -118,24 +229,23 @@ public int MenuHandler_HitMarkerMain(Menu menu, MenuAction action, int param1, i
     }
 }
 
-
 void ShowAdvancedMenu(int client)
 {
     Menu menu = new Menu(MenuHandler_HitMarkerAdvanced);
     menu.SetTitle("Advanced Hit Marker Options");
 
     char itemText[64];
-    Format(itemText, sizeof(itemText), "%s killmarker damage dealed", g_DamageDealedEnabled[client] ? "Disable" : "Enable");
+    Format(itemText, sizeof(itemText), "%s Damage Dealt Display", g_DamageDealedEnabled[client] ? "Disable" : "Enable");
     menu.AddItem("damage_dealed", itemText);
 
-    Format(itemText, sizeof(itemText), "%s hitmarker health left", g_HealthLeftEnabled[client] ? "Disable" : "Enable");
+    Format(itemText, sizeof(itemText), "%s Health Left Display", g_HealthLeftEnabled[client] ? "Disable" : "Enable");
     menu.AddItem("health_left", itemText);
 
     menu.ExitBackButton = true;
     menu.Display(client, MENU_TIME_FOREVER);
 }
 
-public int MenuHandler_HitMarkerAdvanced(Menu menu, MenuAction action, int param1, int param2)
+public void MenuHandler_HitMarkerAdvanced(Menu menu, MenuAction action, int param1, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -145,15 +255,15 @@ public int MenuHandler_HitMarkerAdvanced(Menu menu, MenuAction action, int param
         if (StrEqual(info, "damage_dealed"))
         {
             g_DamageDealedEnabled[param1] = !g_DamageDealedEnabled[param1];
-            PrintToChat(param1, "[hitmarker] Damage dealt in killmarker %s", g_DamageDealedEnabled[param1] ? "enabled" : "disabled");
+            PrintToChat(param1, "[hitmarker] Damage Dealt Display %s", g_DamageDealedEnabled[param1] ? "enabled" : "disabled");
+            ShowAdvancedMenu(param1);
         }
         else if (StrEqual(info, "health_left"))
         {
             g_HealthLeftEnabled[param1] = !g_HealthLeftEnabled[param1];
-            PrintToChat(param1, "[hitmarker] Health left in hitmarker %s", g_HealthLeftEnabled[param1] ? "enabled" : "disabled");
+            PrintToChat(param1, "[hitmarker] Health Left Display %s", g_HealthLeftEnabled[param1] ? "enabled" : "disabled");
+            ShowAdvancedMenu(param1);
         }
-
-        ShowAdvancedMenu(param1);
     }
     else if (action == MenuAction_Cancel && param2 == MenuCancel_ExitBack)
     {
@@ -203,6 +313,11 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
                 PrintToChat(attacker, "[hitmarker] you hit %s with damage %d from distance %.2f meters", victimName, damage > 0 ? damage : 1, distance);
             }
         }
+
+        if (g_SelectedHitSound[attacker][0] != '\0')
+        {
+            EmitSoundToClient(attacker, g_SelectedHitSound[attacker], SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
+        }
     }
 }
 
@@ -230,6 +345,11 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
             {
                 PrintToChat(attacker, "[hitmarker] you killed %s from distance %.2f meters", victimName, distance);
             }
+        }
+
+        if (g_SelectedKillSound[attacker][0] != '\0')
+        {
+            EmitSoundToClient(attacker, g_SelectedKillSound[attacker], SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL);
         }
     }
     
@@ -259,19 +379,6 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 bool IsPlayerValid(int client)
 {
     return (client > 0 && client <= MaxClients && IsClientInGame(client));
-}
-
-public void OnMapStart()
-{
-    if (g_hTimerHitmarkerSay != null)
-    {
-        KillTimer(g_hTimerHitmarkerSay);
-        g_hTimerHitmarkerSay = null;
-    }
-    if (g_cvarHitmarkerSay.IntValue == 1 && g_cvarHitmarkerEnabled.IntValue == 1)
-    {
-        g_hTimerHitmarkerSay = CreateTimer(HITMARKER_INTERVAL, Timer_HitmarkerAnnouncement, _, TIMER_REPEAT);
-    }
 }
 
 public void OnConfigsExecuted()
