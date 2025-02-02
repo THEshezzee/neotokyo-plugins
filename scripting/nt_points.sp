@@ -76,14 +76,63 @@ public Action Command_XP(int client, int args)
 {
     if (args == 0)
     {
+        char jinraiPlayers[MAXPLAYERS][MAX_NAME_LENGTH];
+        int jinraiXP[MAXPLAYERS];
+        int jinraiCount = 0;
+
+        char nsfPlayers[MAXPLAYERS][MAX_NAME_LENGTH];
+        int nsfXP[MAXPLAYERS];
+        int nsfCount = 0;
+
         for (int i = 1; i <= MaxClients; i++)
         {
             if (IsClientInGame(i))
             {
                 char name[MAX_NAME_LENGTH];
                 GetClientName(i, name, sizeof(name));
-                ReplyToCommand(client, "%s - XP: %d", name, GetPlayerXP(i));
+                int xp = GetPlayerXP(i);
+                int team = GetClientTeam(i);
+
+                if (team == TEAM_JINRAI)
+                {
+                    Format(jinraiPlayers[jinraiCount], MAX_NAME_LENGTH, "%s", name);
+                    jinraiXP[jinraiCount] = xp;
+                    jinraiCount++;
+                }
+                else if (team == TEAM_NSF)
+                {
+                    Format(nsfPlayers[nsfCount], MAX_NAME_LENGTH, "%s", name);
+                    nsfXP[nsfCount] = xp;
+                    nsfCount++;
+                }
             }
+        }
+
+        SortPlayersByXP(jinraiPlayers, jinraiXP, jinraiCount);
+        SortPlayersByXP(nsfPlayers, nsfXP, nsfCount);
+
+        ReplyToCommand(client, "- jinrai:");
+        for (int i = 0; i < jinraiCount; i++)
+        {
+            ReplyToCommand(client, "  %s - XP: %d", jinraiPlayers[i], jinraiXP[i]);
+        }
+
+        ReplyToCommand(client, "- nsf:");
+        for (int i = 0; i < nsfCount; i++)
+        {
+            ReplyToCommand(client, "  %s - XP: %d", nsfPlayers[i], nsfXP[i]);
+        }
+    }
+    if (args == 0)
+    {
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            // if (IsClientInGame(i))
+            // {
+            //     char name[MAX_NAME_LENGTH];
+            //     GetClientName(i, name, sizeof(name));
+            //     ReplyToCommand(client, "%s - XP: %d", name, GetPlayerXP(i));
+            // }
         }
     }
     else if (args == 1)
@@ -224,6 +273,27 @@ public Action Command_XP(int client, int args)
         ReplyToCommand(client, "Usage: sm_xp - shows all players' XP\n       sm_xp <player> - shows player's XP\n       sm_xp <player> <value> - sets player's XP\n       sm_xp <player> <+/-><value> - adds or subtracts XP from player\n       sm_xp * <+/-><value> - adjusts XP for all players\n       sm_xp <jinrai/nsf> <value> - sets or adjusts XP for a team");
     }
     return Plugin_Handled;
+}
+
+void SortPlayersByXP(char players[MAXPLAYERS][MAX_NAME_LENGTH], int xp[MAXPLAYERS], int count)
+{
+    for (int i = 0; i < count - 1; i++)
+    {
+        for (int j = 0; j < count - i - 1; j++)
+        {
+            if (xp[j] < xp[j + 1])
+            {
+                int tempXP = xp[j];
+                xp[j] = xp[j + 1];
+                xp[j + 1] = tempXP;
+
+                char tempName[MAX_NAME_LENGTH];
+                Format(tempName, MAX_NAME_LENGTH, "%s", players[j]);
+                Format(players[j], MAX_NAME_LENGTH, "%s", players[j + 1]);
+                Format(players[j + 1], MAX_NAME_LENGTH, "%s", tempName);
+            }
+        }
+    }
 }
 
 void AddXP(int client)
