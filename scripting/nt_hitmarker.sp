@@ -285,7 +285,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
         float attackerPos[3], victimPos[3];
         GetClientAbsOrigin(attacker, attackerPos);
         GetClientAbsOrigin(victim, victimPos);
-        float distance = GetVectorDistance(attackerPos, victimPos) / 48.5;
+        float distance = GetVectorDistance(attackerPos, victimPos) * 0.0254;
         
         int currentHealth = GetClientHealth(victim);
         int damage = g_LastHealth[attacker][victim] - currentHealth;
@@ -331,7 +331,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
         float attackerPos[3], victimPos[3];
         GetClientAbsOrigin(attacker, attackerPos);
         GetClientAbsOrigin(victim, victimPos);
-        float distance = GetVectorDistance(attackerPos, victimPos) / 48.5;
+        float distance = GetVectorDistance(attackerPos, victimPos) * 0.0254;
         
         char victimName[MAX_NAME_LENGTH];
         if (GetClientName(victim, victimName, sizeof(victimName))) 
