@@ -7,6 +7,18 @@
 
 #define PLUGIN_VERSION "1.0"
 
+stock bool IsValidPlayer(int client)
+{
+    if (!IsPlayerAlive(client))
+        return false;
+
+    int team = GetClientTeam(client);
+    if (team <= TEAM_SPECTATOR || team == TEAM_NONE)
+        return false;
+
+    return true;
+}
+
 ConVar g_cvarEnabled;
 ConVar g_cvarAdminOnly;
 ConVar g_cvarBroadcast;
@@ -190,6 +202,10 @@ public int MenuHandler_WeaponSelect(Menu menu, MenuAction action, int client, in
 
 public void GivePlayerWeapon(int client, const char[] weaponClass)
 {
+	
+    if (!IsValidPlayer(client))
+        return;
+
     int weapon = GivePlayerItem(client, weaponClass);
     if (weapon != INVALID_ENT_REFERENCE)
     {
